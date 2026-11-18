@@ -5,7 +5,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://medrescue-api-e7qq.onrender.com/api/:splat"
+  to = "https://medicine-inventory-i94c.onrender.com/api/:splat"
   status = 200
 
 [[redirects]]

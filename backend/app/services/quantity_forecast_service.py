@@ -211,6 +211,7 @@ def predict_quantity(
         .join(Hospital, DemandRecord.hospital_id == Hospital.id)
         .filter(
             DemandRecord.medicine_id == medicine_id,
+            DemandRecord.is_active.is_(True),
             DemandRecord.demand_date >= start,
             Hospital.is_active.is_(True),
             Hospital.bed_capacity > 0,
@@ -230,6 +231,54 @@ def predict_quantity(
         oldest = min(oldest, demand.demand_date)
 
     covered_days = max(1, (today - oldest).days + 1) if records else 0
+    insufficient_history = (
+        len(records) < 8
+        or covered_days < 180
+        or len(months_seen) < 6
+    )
+
+    if insufficient_history:
+        return {
+            "hospital_id": hospital.id,
+            "hospital_name": hospital.name,
+            "bed_capacity": hospital.bed_capacity,
+            "medicine_id": medicine.id,
+            "medicine_name": medicine.name,
+            "generic_name": medicine.generic_name,
+            "category": medicine.category,
+            "horizon_days": horizon_days,
+            "current_stock_units": stock_units,
+            "baseline_quantity": None,
+            "forecast_quantity": None,
+            "recommended_replenishment": 0,
+            "daily_demand_per_bed": None,
+            "data_support": "insufficient",
+            "recorded_demand_count": len(records),
+            "coverage": {
+                "covered_days": covered_days,
+                "distinct_months": len(months_seen),
+                "minimum_records": 8,
+                "minimum_covered_days": 180,
+                "minimum_distinct_months": 6,
+            },
+            "environment": {
+                "season": current_season,
+                "temperature_celsius": current_temp,
+                "humidity_percentage": current_humidity,
+                "aqi": current_aqi,
+                "outbreak_risk": current_outbreak,
+                "combined_multiplier": None,
+            },
+            "explainable_ai": {
+                "provider": explainer_provider,
+                "explanation": "Insufficient demand history: at least 8 active observations across 180 days and 6 distinct months are required.",
+                "grounding_audit": [],
+                "guaranteed_accuracy": "No guessed quantity",
+                "feature_importance": [],
+            },
+            "explanation": "Insufficient demand history: at least 8 active observations across 180 days and 6 distinct months are required.",
+            "confidence_note": "A quantity is not forecast when the historical coverage requirement is not met.",
+        }
 
     # 3. Calculate baseline daily demand per bed
     med_cat = (medicine.category or "default").lower()

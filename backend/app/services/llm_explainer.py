@@ -38,6 +38,7 @@ def generate_deterministic_explanation(query: str, facts: List[Dict[str, Any]]) 
 
         return (
             f"[Audited 100% DB-Grounded XAI] For {med} at {hosp} ({beds}): "
+            f"Forecast = {pred}. "
             f"Standard unadjusted baseline requirement is {base} over a {horizon} operational window. "
             f"Environmental modeling applies a {mult} composite scaling factor due to {season}, {aqi}, and {temp}. "
             f"This yields a calculated clinical requirement of {pred}. "
